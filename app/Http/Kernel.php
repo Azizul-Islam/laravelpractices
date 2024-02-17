@@ -2,6 +2,7 @@
 
 namespace App\Http;
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
 class Kernel extends HttpKernel
@@ -40,7 +41,7 @@ class Kernel extends HttpKernel
 
         'api' => [
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-            \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
+            \Illuminate\Routing\Middleware\ThrottleRequests::class . ':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
     ];
@@ -66,4 +67,18 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'restrictRole' => \App\Http\Middleware\CheckRole::class
     ];
+
+
+    
+    /**
+     * The schedule function in PHP is used to set up a command to run daily at midnight.
+     * 
+     * @param Schedule schedule In Laravel, the `schedule` method is used to define the scheduled tasks
+     * for the application. It takes a `Schedule` object as a parameter, which allows you to define the
+     * scheduled tasks using a fluent API.
+     */
+    protected function schedule(Schedule $schedule)
+    {
+        $schedule->command('schedule:completed-order')->daily('00:00');
+    }
 }

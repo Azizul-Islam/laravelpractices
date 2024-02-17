@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\UserAuthController;
 use App\Http\Middleware\checkRole;
@@ -26,21 +27,29 @@ Route::post('login', [UserAuthController::class, 'login']);
 Route::post('logout', [UserAuthController::class, 'logout'])
   ->middleware('auth:sanctum');
 
-Route::middleware(['auth:sanctum', 'restrictRole:1'])->prefix('admin/')->group(function () {
-  Route::controller(ProductController::class)
-    ->prefix('products')
-    ->group(function () {
-      Route::get('/', 'index');
-      Route::post('/', 'store');
-      Route::get('/{id}', 'show');
-      Route::put('/{id}/update', 'update');
-      Route::delete('/{id}/delete', 'destroy');
-    });
-});
-
-
-Route::middleware(['auth:sanctum', 'restrictRole:2'])->prefix('customer/')->group(function () {
-  Route::get('/test', function () {
-    return 'okkkk';
+Route::middleware(['auth:sanctum'])->group(function () {
+  //all admin route
+  Route::middleware(['restrictRole:1'])->prefix('admin/')->group(function () {
+    Route::controller(ProductController::class)
+      ->prefix('products')
+      ->group(function () {
+        Route::get('/', 'index');
+        Route::post('/', 'store');
+        Route::get('/{id}', 'show');
+        Route::put('/{id}/update', 'update');
+        Route::delete('/{id}/delete', 'destroy');
+      });
   });
+
+  // all customer route
+  Route::middleware(['restrictRole:2'])->prefix('customer/')->group(function () {
+    Route::get('/test', function () {
+      return 'okkkk';
+    });
+  });
+
+  Route::post('place-order',[OrderController::class,'placeOrder']);
+  Route::get('orders',[OrderController::class,'index']);
+  Route::get('orders/{id}',[OrderController::class,'show']);
+
 });
