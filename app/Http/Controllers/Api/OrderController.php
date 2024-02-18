@@ -3,14 +3,31 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\OrderRequest;
 use App\Http\Resources\OrderDetailsResource;
 use App\Http\Resources\OrderResource;
 use App\Models\OrderProduct;
 use App\Models\Order;
+use App\Repositories\OrderRepositoryInterface;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
+    protected $orderRepository;
+
+    /**
+     * The function is a constructor that injects an OrderRepositoryInterface dependency into the
+     * class.
+     * 
+     * @param OrderRepositoryInterface orderRepository The `orderRepository` parameter in the
+     * constructor is an instance of a class that implements the `OrderRepositoryInterface`. This
+     * parameter is injected into the class through dependency injection, allowing the class to
+     * interact with and utilize the methods provided by the `OrderRepositoryInterface` implementation.
+     */
+    public function __construct(OrderRepositoryInterface $orderRepository)
+    {
+        $this->orderRepository = $orderRepository;
+    }
     /**
      * The index function retrieves the latest orders and returns them as a JSON response using
      * OrderResource.
@@ -24,6 +41,34 @@ class OrderController extends Controller
         return response()->json([
             'data' => OrderResource::collection($orders)
         ]);
+    }
+
+
+    /**
+     * The function `store` accepts an `OrderRequest` object, creates a new order using the data from
+     * the request, and returns a JSON response with a success message and the order data, handling any
+     * exceptions by dumping the error message.
+     * 
+     * @param OrderRequest request The `store` function in the code snippet is responsible for storing
+     * an order based on the data provided in the `OrderRequest` object. Here's a breakdown of the
+     * code:
+     * 
+     * @return The `store` function is returning a JSON response with a success message and the data of
+     * the created order. The response includes a 'msg' key with the value 'Order submit success' and a
+     * 'data' key with the value of the created order.
+     */
+    public function store(OrderRequest $request)
+    {
+        try {
+            $data = $request->all();
+            $order = $this->orderRepository->create($data);
+            return response()->json([
+                'msg' => 'Order submit success',
+                'data' => $order
+            ]);
+        } catch (\Exception $e) {
+            dd($e->getMessage());
+        }
     }
 
 
@@ -50,44 +95,28 @@ class OrderController extends Controller
         }
     }
 
-
     /**
-     * The function `placeOrder` in PHP stores an order with order details and related products in the
-     * database and returns a JSON response with a success message and order data.
+     * The function `customerOrder` retrieves and returns orders belonging to the authenticated user in
+     * a JSON response, handling cases where orders are found or not found.
      * 
-     * @param Request request The `placeOrder` function you provided is responsible for storing an order
-     * and its related products in the database. It takes a `Request` object as a parameter, which
-     * likely contains the necessary data for creating the order.
-     * 
-     * @return The `placeOrder` function is returning a JSON response with a success message 'Order
-     * submit success' and the data of the newly created order. The data includes the order details such
-     * as order number, user ID, total amount, and payment method.
+     * @return If the `` variable is set and contains data, a JSON response with the orders data
+     * and a success message 'Orders find success' is being returned. If the `` variable is not
+     * set or empty, a JSON response with an empty data field and a message 'Order not found!' is being
+     * returned. If an exception occurs during the execution of the code, the error message will be
      */
-    public function placeOrder(Request $request)
+    public function curtomerOrder()
     {
         try {
-            //store order
-            $order = new Order;
-            $order->order_number = 'ORD-' . rand();
-            $order->user_id = auth()->user()->id;
-            $order->total_amount = $request->total;
-            $order->payment_method = $request->payment_method;
-            $order->save();
-
-            $orderProducts = [];
-            foreach ($request->carts as $cart) {
-                $orderProducts[] = [
-                    'product_id' => $cart['product_id'],
-                    'order_id' => $order->id,
-                    'qty' => $cart['qty'],
-                    'price' => $cart['price']
-                ];
+            $orders = Order::where('user_id', auth()->user()->id)->latest()->get();
+            if (isset($orders)) {
+                return response()->json([
+                    'data' => $orders,
+                    'msg' => 'Orders find success'
+                ]);
             }
-            //insert order_product table
-            OrderProduct::insert($orderProducts);
             return response()->json([
-                'msg' => 'Order submit success',
-                'data' => $order
+                'data' => '',
+                'msg' => 'Order not found!'
             ]);
         } catch (\Exception $e) {
             dd($e->getMessage());

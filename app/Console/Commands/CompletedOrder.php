@@ -29,7 +29,7 @@ class CompletedOrder extends Command
     public function handle()
     {
         $deliveredOrders = Order::where('order_status', 'completed')->get();
-        // Move each delivered order to the deliveries table
+        // Move each completed order to the deliveries table
         foreach ($deliveredOrders as $order) {
             Delivery::create($order->toArray());
         }

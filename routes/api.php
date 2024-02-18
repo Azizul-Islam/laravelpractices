@@ -43,13 +43,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
   // all customer route
   Route::middleware(['restrictRole:2'])->prefix('customer/')->group(function () {
-    Route::get('/test', function () {
-      return 'okkkk';
-    });
+    Route::get('orders', [OrderController::class, 'curtomerOrder']);
   });
 
-  Route::post('place-order',[OrderController::class,'placeOrder']);
-  Route::get('orders',[OrderController::class,'index']);
-  Route::get('orders/{id}',[OrderController::class,'show']);
-
+  Route::post('orders', [OrderController::class, 'store']);
+  Route::get('orders', [OrderController::class, 'index']);
+  Route::get('orders/{id}', [OrderController::class, 'show']);
 });
